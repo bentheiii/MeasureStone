@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Numerics;
 using WhetStone.Funnels;
 using WhetStone.Units;
 using WhetStone.WordPlay;
@@ -10,31 +11,31 @@ namespace MeasureStone
     //arbitrary is meters
     public class Length : IUnit<Length>, ScaleMeasurement, DeltaMeasurement, IComparable<Length>
     {
-        public Length(double val, IUnit<Length> unit) : this(unit.ToArbitrary(val)) { }
-        public Length(double arbitrary)
+        public Length(BigRational val, IUnit<Length> unit) : this(unit.ToArbitrary(val)) { }
+        public Length(BigRational arbitrary)
         {
             this.Arbitrary = arbitrary;
         }
-        public double Arbitrary { get; }
-        double ScaleMeasurement.Arbitrary
+        public BigRational Arbitrary { get; }
+        BigRational ScaleMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        double DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        public override double FromArbitrary(double arb)
+        public override BigRational FromArbitrary(BigRational arb)
         {
             return arb / Arbitrary;
         }
-        public override double ToArbitrary(double val)
+        public override BigRational ToArbitrary(BigRational val)
         {
             return val * Arbitrary;
         }
@@ -93,14 +94,14 @@ namespace MeasureStone
         }
         public static Length operator +(Length a, Length b)
         {
-            double c = a.Arbitrary + b.Arbitrary;
+            var c = a.Arbitrary + b.Arbitrary;
             return new Length(c);
         }
         public static Length operator -(Length a, Length b)
         {
             return a + (-b);
         }
-        public static double operator /(Length a, Length b)
+        public static BigRational operator /(Length a, Length b)
         {
             return a.Arbitrary / b.Arbitrary;
         }

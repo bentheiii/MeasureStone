@@ -3,44 +3,45 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Xml;
-using WhetStone.Data;
+using Numerics;
 using WhetStone.Funnels;
 using PermaStone;
 using WebStone;
 using WhetStone.Units;
 using WhetStone.WordPlay;
 using WhetStone.WordPlay.Parsing;
+using XMLStone;
 
 namespace MeasureStone
 {
     //arbitrary is euro
     public class Money : IUnit<Money>, ScaleMeasurement, DeltaMeasurement, IComparable<Money>
     {
-        public Money(double val, IUnit<Money> unit) : this(unit.ToArbitrary(val)) { }
-        public Money(double arbitrary)
+        public Money(BigRational val, IUnit<Money> unit) : this(unit.ToArbitrary(val)) { }
+        public Money(BigRational arbitrary)
         {
             this.Arbitrary = arbitrary;
         }
-        public double Arbitrary { get; }
-        double ScaleMeasurement.Arbitrary
+        public BigRational Arbitrary { get; }
+        BigRational ScaleMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        double DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        public override double FromArbitrary(double arb)
+        public override BigRational FromArbitrary(BigRational arb)
         {
             return arb / Arbitrary;
         }
-        public override double ToArbitrary(double val)
+        public override BigRational ToArbitrary(BigRational val)
         {
             return val * Arbitrary;
         }
@@ -144,14 +145,14 @@ namespace MeasureStone
         }
         public static Money operator +(Money a, Money b)
         {
-            double c = a.Arbitrary + b.Arbitrary;
+            var c = a.Arbitrary + b.Arbitrary;
             return new Money(c);
         }
         public static Money operator -(Money a, Money b)
         {
             return a + (-b);
         }
-        public static double operator /(Money a, Money b)
+        public static BigRational operator /(Money a, Money b)
         {
             return a.Arbitrary / b.Arbitrary;
         }

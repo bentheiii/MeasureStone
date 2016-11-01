@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Numerics;
 using WhetStone.Funnels;
 using WhetStone.Units;
 using WhetStone.WordPlay;
@@ -10,31 +11,31 @@ namespace MeasureStone
     //arbitrary is kilogram
     public class Mass : IUnit<Mass>, ScaleMeasurement, DeltaMeasurement, IComparable<Mass>
     {
-        public Mass(double val, IUnit<Mass> unit) : this(unit.ToArbitrary(val)) { }
-        public Mass(double arbitrary)
+        public Mass(BigRational val, IUnit<Mass> unit) : this(unit.ToArbitrary(val)) { }
+        public Mass(BigRational arbitrary)
         {
             this.Arbitrary = arbitrary;
         }
-        public double Arbitrary { get; }
-        double ScaleMeasurement.Arbitrary
+        public BigRational Arbitrary { get; }
+        BigRational ScaleMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        double DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        public override double FromArbitrary(double arb)
+        public override BigRational FromArbitrary(BigRational arb)
         {
             return arb / Arbitrary;
         }
-        public override double ToArbitrary(double val)
+        public override BigRational ToArbitrary(BigRational val)
         {
             return val * Arbitrary;
         }
@@ -85,14 +86,14 @@ namespace MeasureStone
         }
         public static Mass operator +(Mass a, Mass b)
         {
-            double c = a.Arbitrary + b.Arbitrary;
+            var c = a.Arbitrary + b.Arbitrary;
             return new Mass(c);
         }
         public static Mass operator -(Mass a, Mass b)
         {
             return a + (-b);
         }
-        public static double operator /(Mass a, Mass b)
+        public static BigRational operator /(Mass a, Mass b)
         {
             return a.Arbitrary / b.Arbitrary;
         }

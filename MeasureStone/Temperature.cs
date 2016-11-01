@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Numerics;
 using WhetStone.Funnels;
 using WhetStone.Units;
 using WhetStone.WordPlay;
@@ -10,14 +11,14 @@ namespace MeasureStone
     //arbitrary is kelvin
     public class Temperature : ScaleMeasurement, IComparable<Temperature>
     {
-        public Temperature(double val, IScaleUnit<Temperature> unit) : this(unit.ToArbitrary(val)) { }
-        public Temperature(double arbitrary)
+        public Temperature(BigRational val, IScaleUnit<Temperature> unit) : this(unit.ToArbitrary(val)) { }
+        public Temperature(BigRational arbitrary)
         {
             if (arbitrary < 0)
                 throw new Exception("temperature scale cannot be negative");
             this.Arbitrary = arbitrary;
         }
-        public double Arbitrary { get; }
+        public BigRational Arbitrary { get; }
         public int CompareTo(Temperature other)
         {
             return Arbitrary.CompareTo(other.Arbitrary);
@@ -82,28 +83,28 @@ namespace MeasureStone
     }
     public class TemperatureDelta : DeltaMeasurement, IDeltaUnit<TemperatureDelta>, IComparable<TemperatureDelta>
     {
-        public TemperatureDelta(double val, IDeltaUnit<TemperatureDelta> unit) : this(unit.ToArbitrary(val)) { }
-        public TemperatureDelta(double arbitrary)
+        public TemperatureDelta(BigRational val, IDeltaUnit<TemperatureDelta> unit) : this(unit.ToArbitrary(val)) { }
+        public TemperatureDelta(BigRational arbitrary)
         {
             this.Arbitrary = arbitrary;
         }
-        public double Arbitrary { get; }
+        public BigRational Arbitrary { get; }
         public int CompareTo(TemperatureDelta other)
         {
             return Arbitrary.CompareTo(other.Arbitrary);
         }
-        double DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        public double FromArbitrary(double arb)
+        public BigRational FromArbitrary(BigRational arb)
         {
             return arb * Arbitrary;
         }
-        public double ToArbitrary(double val)
+        public BigRational ToArbitrary(BigRational val)
         {
             return val / Arbitrary;
         }
@@ -144,14 +145,14 @@ namespace MeasureStone
         }
         public static TemperatureDelta operator +(TemperatureDelta a, TemperatureDelta b)
         {
-            double c = a.Arbitrary + b.Arbitrary;
+            var c = a.Arbitrary + b.Arbitrary;
             return new TemperatureDelta(c);
         }
         public static TemperatureDelta operator -(TemperatureDelta a, TemperatureDelta b)
         {
             return a + (-b);
         }
-        public static double operator /(TemperatureDelta a, TemperatureDelta b)
+        public static BigRational operator /(TemperatureDelta a, TemperatureDelta b)
         {
             return a.Arbitrary / b.Arbitrary;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Numerics;
 using WhetStone.Funnels;
 using WhetStone.Units;
 using WhetStone.WordPlay;
@@ -9,28 +10,28 @@ namespace MeasureStone
 {
     public class GraphicsLength : IUnit<GraphicsLength>, ScaleMeasurement, DeltaMeasurement, IComparable<GraphicsLength>
     {
-        public GraphicsLength(double val, IDeltaUnit<GraphicsLength> unit) : this(unit.ToArbitrary(val)) { }
-        public GraphicsLength(double arbitrary)
+        public GraphicsLength(BigRational val, IDeltaUnit<GraphicsLength> unit) : this(unit.ToArbitrary(val)) { }
+        public GraphicsLength(BigRational arbitrary)
         {
             this.Arbitrary = arbitrary;
         }
-        public double Arbitrary { get; }
+        public BigRational Arbitrary { get; }
         public int CompareTo(GraphicsLength other)
         {
             return Arbitrary.CompareTo(other.Arbitrary);
         }
-        double DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        public override double FromArbitrary(double arb)
+        public override BigRational FromArbitrary(BigRational arb)
         {
             return arb / Arbitrary;
         }
-        public override double ToArbitrary(double val)
+        public override BigRational ToArbitrary(BigRational val)
         {
             return val * Arbitrary;
         }
@@ -67,14 +68,14 @@ namespace MeasureStone
         }
         public static GraphicsLength operator +(GraphicsLength a, GraphicsLength b)
         {
-            double c = a.Arbitrary + b.Arbitrary;
+            var c = a.Arbitrary + b.Arbitrary;
             return new GraphicsLength(c);
         }
         public static GraphicsLength operator -(GraphicsLength a, GraphicsLength b)
         {
             return a + (-b);
         }
-        public static double operator /(GraphicsLength a, GraphicsLength b)
+        public static BigRational operator /(GraphicsLength a, GraphicsLength b)
         {
             return a.Arbitrary / b.Arbitrary;
         }
