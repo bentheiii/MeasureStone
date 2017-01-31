@@ -9,7 +9,7 @@ using WhetStone.WordPlay.Parsing;
 namespace MeasureStone
 {
     //arbitrary is meters
-    public class Length : IUnit<Length>, ScaleMeasurement, DeltaMeasurement, IComparable<Length>
+    public class Length : IUnit<Length>, ScaleMeasurement<Length>, DeltaMeasurement<Length>, IComparable<Length>
     {
         public Length(BigRational val, IUnit<Length> unit) : this(unit.ToArbitrary(val)) { }
         public Length(BigRational arbitrary)
@@ -17,14 +17,14 @@ namespace MeasureStone
             this.Arbitrary = arbitrary;
         }
         public BigRational Arbitrary { get; }
-        BigRational ScaleMeasurement.Arbitrary
+        BigRational ScaleMeasurement<Length>.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        BigRational DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement<Length>.Arbitrary
         {
             get
             {
@@ -64,6 +64,20 @@ namespace MeasureStone
             LightYear = new Length(9460730472580800);
             AstronomicalUnit = new Length(149597870700);
             Parsec = new Length(648000 / Math.PI, AstronomicalUnit);
+            _udic = new Dictionary<string, Tuple<IUnit<Length>, string>>(11)
+            {
+                ["M"] = Tuple.Create<IUnit<Length>, string>(Meter, "m"),
+                ["CM"] = Tuple.Create<IUnit<Length>, string>(CentiMeter, "cm"),
+                ["MM"] = Tuple.Create<IUnit<Length>, string>(MilliMeter, "mm"),
+                ["KM"] = Tuple.Create<IUnit<Length>, string>(KiloMeter, "km"),
+                ["F"] = Tuple.Create<IUnit<Length>, string>(Foot, "f"),
+                ["Y"] = Tuple.Create<IUnit<Length>, string>(Yard, "yd"),
+                ["MI"] = Tuple.Create<IUnit<Length>, string>(Mile, "mi"),
+                ["LS"] = Tuple.Create<IUnit<Length>, string>(LightSecond, "ls"),
+                ["LY"] = Tuple.Create<IUnit<Length>, string>(LightYear, "ly"),
+                ["P"] = Tuple.Create<IUnit<Length>, string>(Parsec, "p"),
+                ["AU"] = Tuple.Create<IUnit<Length>, string>(AstronomicalUnit, "au")
+            };
             DefaultParsers = new Lazy<Funnel<string, Length>>(() => new Funnel<string, Length>(
                 new Parser<Length>($@"^({CommonRegex.RegexDouble}) ?(m|meters?)$", m => new Length(double.Parse(m.Groups[1].Value), Meter)),
                 new Parser<Length>($@"^({CommonRegex.RegexDouble}) ?(cm|centimeters?)$", m => new Length(double.Parse(m.Groups[1].Value), CentiMeter)),
@@ -109,22 +123,12 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        private static readonly IDictionary<string, Tuple<IUnit<Length>, string>> _udic;
+        public override IDictionary<string, Tuple<IUnit<Length>, string>> unitDictionary => _udic;
         //accepted formats (M|CM|MM|KM|F|Y|MI|LS|LY|P|AU)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IScaleUnit<Length>, string>> unitDictionary = new Dictionary<string, Tuple<IScaleUnit<Length>, string>>(11);
-            unitDictionary["M"] = Tuple.Create<IScaleUnit<Length>, string>(Meter, "m");
-            unitDictionary["CM"] = Tuple.Create<IScaleUnit<Length>, string>(CentiMeter, "cm");
-            unitDictionary["MM"] = Tuple.Create<IScaleUnit<Length>, string>(MilliMeter, "mm");
-            unitDictionary["KM"] = Tuple.Create<IScaleUnit<Length>, string>(KiloMeter, "km");
-            unitDictionary["F"] = Tuple.Create<IScaleUnit<Length>, string>(Foot, "f");
-            unitDictionary["Y"] = Tuple.Create<IScaleUnit<Length>, string>(Yard, "yd");
-            unitDictionary["MI"] = Tuple.Create<IScaleUnit<Length>, string>(Mile, "mi");
-            unitDictionary["LS"] = Tuple.Create<IScaleUnit<Length>, string>(LightSecond, "ls");
-            unitDictionary["LY"] = Tuple.Create<IScaleUnit<Length>, string>(LightYear, "ly");
-            unitDictionary["P"] = Tuple.Create<IScaleUnit<Length>, string>(Parsec, "p");
-            unitDictionary["AU"] = Tuple.Create<IScaleUnit<Length>, string>(AstronomicalUnit, "au");
-            return this.StringFromUnitDictionary(format, "M", formatProvider, unitDictionary);
+            return this.StringFromUnitDictionary(format, "M", formatProvider, scaleDictionary);
         }
         public override int GetHashCode()
         {

@@ -8,7 +8,7 @@ using WhetStone.WordPlay.Parsing;
 
 namespace MeasureStone
 {
-    public class GraphicsLength : IUnit<GraphicsLength>, ScaleMeasurement, DeltaMeasurement, IComparable<GraphicsLength>
+    public class GraphicsLength : IUnit<GraphicsLength>, ScaleMeasurement<GraphicsLength>, DeltaMeasurement<GraphicsLength>, IComparable<GraphicsLength>
     {
         public GraphicsLength(BigRational val, IDeltaUnit<GraphicsLength> unit) : this(unit.ToArbitrary(val)) { }
         public GraphicsLength(BigRational arbitrary)
@@ -20,7 +20,7 @@ namespace MeasureStone
         {
             return Arbitrary.CompareTo(other.Arbitrary);
         }
-        BigRational DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement<GraphicsLength>.Arbitrary
         {
             get
             {
@@ -46,6 +46,10 @@ namespace MeasureStone
         static GraphicsLength()
         {
             Pixel = new GraphicsLength(1);
+            _udic = new Dictionary<string, Tuple<IUnit<GraphicsLength>, string>>(1)
+            {
+                ["P"] = Tuple.Create<IUnit<GraphicsLength>, string>(Pixel, "P")
+            };
             DefaultParsers = new Lazy<Funnel<string, GraphicsLength>>(() => new Funnel<string, GraphicsLength>(
                 new Parser<GraphicsLength>($@"^({CommonRegex.RegexDouble}) ?(p|pixels?)$", m => new GraphicsLength(double.Parse(m.Groups[1].Value), Pixel))
                 ));
@@ -83,12 +87,12 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        private static  readonly IDictionary<string, Tuple<IUnit<GraphicsLength>, string>> _udic;
+        public override IDictionary<string, Tuple<IUnit<GraphicsLength>, string>> unitDictionary => _udic;
         //accepted formats (P)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IDeltaUnit<GraphicsLength>, string>> unitDictionary = new Dictionary<string, Tuple<IDeltaUnit<GraphicsLength>, string>>(1);
-            unitDictionary["P"] = Tuple.Create<IDeltaUnit<GraphicsLength>, string>(Pixel, "P");
-            return this.StringFromDeltaDictionary(format, "P", formatProvider, unitDictionary);
+            return this.StringFromUnitDictionary(format, "P", formatProvider, scaleDictionary);
         }
         public override int GetHashCode()
         {

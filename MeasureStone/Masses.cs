@@ -9,7 +9,7 @@ using WhetStone.WordPlay.Parsing;
 namespace MeasureStone
 {
     //arbitrary is kilogram
-    public class Mass : IUnit<Mass>, ScaleMeasurement, DeltaMeasurement, IComparable<Mass>
+    public class Mass : IUnit<Mass>, ScaleMeasurement<Mass>, DeltaMeasurement<Mass>, IComparable<Mass>
     {
         public Mass(BigRational val, IUnit<Mass> unit) : this(unit.ToArbitrary(val)) { }
         public Mass(BigRational arbitrary)
@@ -17,14 +17,14 @@ namespace MeasureStone
             this.Arbitrary = arbitrary;
         }
         public BigRational Arbitrary { get; }
-        BigRational ScaleMeasurement.Arbitrary
+        BigRational ScaleMeasurement<Mass>.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        BigRational DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement<Mass>.Arbitrary
         {
             get
             {
@@ -59,6 +59,15 @@ namespace MeasureStone
             Milligram = new Mass(1E-06);
             Pound = new Mass(0.45359237);
             Ounce = new Mass(28.349523125, Gram);
+            _udic = new Dictionary<string, Tuple<IUnit<Mass>, string>>(11)
+            {
+                ["K"] = Tuple.Create<IUnit<Mass>, string>(KiloGram, "kg"),
+                ["M"] = Tuple.Create<IUnit<Mass>, string>(Milligram, "mg"),
+                ["G"] = Tuple.Create<IUnit<Mass>, string>(Gram, "g"),
+                ["T"] = Tuple.Create<IUnit<Mass>, string>(Tonne, "t"),
+                ["O"] = Tuple.Create<IUnit<Mass>, string>(Ounce, "oz"),
+                ["L"] = Tuple.Create<IUnit<Mass>, string>(Pound, "lb")
+            };
             DefaultParsers = new Lazy<Funnel<string, Mass>>(() => new Funnel<string, Mass>(
                 new Parser<Mass>($@"^({CommonRegex.RegexDouble}) ?(kg?|kilograms?)$", m => new Mass(double.Parse(m.Groups[1].Value), KiloGram)),
                 new Parser<Mass>($@"^({CommonRegex.RegexDouble}) ?(g|grams?)$", m => new Mass(double.Parse(m.Groups[1].Value), Gram)),
@@ -101,17 +110,12 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        private static readonly IDictionary<string, Tuple<IUnit<Mass>, string>> _udic;
+        public override IDictionary<string, Tuple<IUnit<Mass>, string>> unitDictionary => _udic;
         //accepted formats (K|M|G|T|O|L)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IScaleUnit<Mass>, string>> unitDictionary = new Dictionary<string, Tuple<IScaleUnit<Mass>, string>>(11);
-            unitDictionary["K"] = Tuple.Create<IScaleUnit<Mass>, string>(KiloGram, "kg");
-            unitDictionary["M"] = Tuple.Create<IScaleUnit<Mass>, string>(Milligram, "mg");
-            unitDictionary["G"] = Tuple.Create<IScaleUnit<Mass>, string>(Gram, "g");
-            unitDictionary["T"] = Tuple.Create<IScaleUnit<Mass>, string>(Tonne, "t");
-            unitDictionary["O"] = Tuple.Create<IScaleUnit<Mass>, string>(Ounce, "oz");
-            unitDictionary["L"] = Tuple.Create<IScaleUnit<Mass>, string>(Pound, "lb");
-            return this.StringFromUnitDictionary(format, "K", formatProvider, unitDictionary);
+            return this.StringFromUnitDictionary(format, "K", formatProvider, scaleDictionary);
         }
         public override int GetHashCode()
         {

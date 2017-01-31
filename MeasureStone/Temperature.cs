@@ -9,7 +9,7 @@ using WhetStone.WordPlay.Parsing;
 namespace MeasureStone
 {
     //arbitrary is kelvin
-    public class Temperature : ScaleMeasurement, IComparable<Temperature>
+    public class Temperature : ScaleMeasurement<Temperature>, IComparable<Temperature>
     {
         public Temperature(BigRational val, IScaleUnit<Temperature> unit) : this(unit.ToArbitrary(val)) { }
         public Temperature(BigRational arbitrary)
@@ -33,9 +33,9 @@ namespace MeasureStone
         public static readonly IScaleUnit<Temperature> Kelvin, Fahrenheit, Celsius;
         static Temperature()
         {
-            Kelvin = new ScaleUnit<Temperature>(1);
-            Celsius = new ScaleUnit<Temperature>(1, -273.15);
-            Fahrenheit = new ScaleUnit<Temperature>(9 / 5.0, -459.67);
+            Kelvin = new ScaleUnit<Temperature>(_udic,1);
+            Celsius = new ScaleUnit<Temperature>(_udic, 1, -273.15);
+            Fahrenheit = new ScaleUnit<Temperature>(_udic, 9 / 5.0, -459.67);
             DefaultParsers = new Lazy<Funnel<string, Temperature>>(() => new Funnel<string, Temperature>(
                 new Parser<Temperature>($@"^({CommonRegex.RegexDouble}) ?(k|kelvin)$", m => new Temperature(double.Parse(m.Groups[1].Value), Kelvin)),
                 new Parser<Temperature>($@"^({CommonRegex.RegexDouble}) ?(f|fahrenheit)$", m => new Temperature(double.Parse(m.Groups[1].Value), Fahrenheit)),
@@ -62,14 +62,18 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        private static  readonly IDictionary<string, Tuple<IScaleUnit<Temperature>, string>> _udic =
+        new Dictionary<string, Tuple<IScaleUnit<Temperature>, string>>(3)
+        {
+            ["K"] = Tuple.Create(Kelvin, "K"),
+            ["F"] = Tuple.Create(Fahrenheit, "F"),
+            ["C"] = Tuple.Create(Celsius, "C")
+        };
+        public IDictionary<string, Tuple<IScaleUnit<Temperature>, string>> scaleDictionary => _udic;
         //accepted formats (K|F|C)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IScaleUnit<Temperature>, string>> unitDictionary = new Dictionary<string, Tuple<IScaleUnit<Temperature>, string>>(11);
-            unitDictionary["K"] = Tuple.Create(Kelvin, "K");
-            unitDictionary["F"] = Tuple.Create(Fahrenheit, "F");
-            unitDictionary["C"] = Tuple.Create(Celsius, "C");
-            return this.StringFromUnitDictionary(format, "C", formatProvider, unitDictionary);
+            return this.StringFromUnitDictionary(format, "C", formatProvider, scaleDictionary);
         }
         public override int GetHashCode()
         {
@@ -81,7 +85,7 @@ namespace MeasureStone
             return an != null && an.Arbitrary == this.Arbitrary;
         }
     }
-    public class TemperatureDelta : DeltaMeasurement, IDeltaUnit<TemperatureDelta>, IComparable<TemperatureDelta>
+    public class TemperatureDelta : DeltaMeasurement<TemperatureDelta>, IDeltaUnit<TemperatureDelta>, IComparable<TemperatureDelta>
     {
         public TemperatureDelta(BigRational val, IDeltaUnit<TemperatureDelta> unit) : this(unit.ToArbitrary(val)) { }
         public TemperatureDelta(BigRational arbitrary)
@@ -93,7 +97,7 @@ namespace MeasureStone
         {
             return Arbitrary.CompareTo(other.Arbitrary);
         }
-        BigRational DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement<TemperatureDelta>.Arbitrary
         {
             get
             {
@@ -121,6 +125,12 @@ namespace MeasureStone
             Kelvin = new TemperatureDelta(1);
             Celsius = Kelvin;
             Fahrenheit = new TemperatureDelta(9 / 5.0);
+            _udic = new Dictionary<string, Tuple<IDeltaUnit<TemperatureDelta>, string>>(3)
+            {
+                ["K"] = Tuple.Create<IDeltaUnit<TemperatureDelta>, string>(Kelvin, "K"),
+                ["F"] = Tuple.Create<IDeltaUnit<TemperatureDelta>, string>(Fahrenheit, "F"),
+                ["C"] = Tuple.Create<IDeltaUnit<TemperatureDelta>, string>(Celsius, "C")
+            };
             DefaultParsers = new Lazy<Funnel<string, TemperatureDelta>>(() => new Funnel<string, TemperatureDelta>(
                 new Parser<TemperatureDelta>($@"^({CommonRegex.RegexDouble}) ?(k|kelvin)$", m => new TemperatureDelta(double.Parse(m.Groups[1].Value), Kelvin)),
                 new Parser<TemperatureDelta>($@"^({CommonRegex.RegexDouble}) ?(f|fahrenheit)$", m => new TemperatureDelta(double.Parse(m.Groups[1].Value), Fahrenheit)),
@@ -160,14 +170,12 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        private static readonly IDictionary<string, Tuple<IDeltaUnit<TemperatureDelta>, string>> _udic;
+        public IDictionary<string, Tuple<IDeltaUnit<TemperatureDelta>, string>> deltaDictionary => _udic;
         //accepted formats (K|F|C)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IDeltaUnit<TemperatureDelta>, string>> unitDictionary = new Dictionary<string, Tuple<IDeltaUnit<TemperatureDelta>, string>>(11);
-            unitDictionary["K"] = Tuple.Create<IDeltaUnit<TemperatureDelta>, string>(Kelvin, "K");
-            unitDictionary["F"] = Tuple.Create<IDeltaUnit<TemperatureDelta>, string>(Fahrenheit, "F");
-            unitDictionary["C"] = Tuple.Create<IDeltaUnit<TemperatureDelta>, string>(Celsius, "C");
-            return this.StringFromDeltaDictionary(format, "C", formatProvider, unitDictionary);
+            return this.StringFromDeltaDictionary(format, "C", formatProvider, deltaDictionary);
         }
         public override int GetHashCode()
         {

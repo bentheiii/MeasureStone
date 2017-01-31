@@ -15,7 +15,7 @@ using XMLStone;
 namespace MeasureStone
 {
     //arbitrary is euro
-    public class Money : IUnit<Money>, ScaleMeasurement, DeltaMeasurement, IComparable<Money>
+    public class Money : IUnit<Money>, ScaleMeasurement<Money>, DeltaMeasurement<Money>, IComparable<Money>
     {
         public Money(BigRational val, IUnit<Money> unit) : this(unit.ToArbitrary(val)) { }
         public Money(BigRational arbitrary)
@@ -23,14 +23,14 @@ namespace MeasureStone
             this.Arbitrary = arbitrary;
         }
         public BigRational Arbitrary { get; }
-        BigRational ScaleMeasurement.Arbitrary
+        BigRational ScaleMeasurement<Money>.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        BigRational DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement<Money>.Arbitrary
         {
             get
             {
@@ -71,8 +71,15 @@ namespace MeasureStone
             NewShekel = new Money(0.26, DollarUS);
             Yen = new Money(0.009, DollarUS);
 
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_exchangeRatesPermaPath));
+            Directory.CreateDirectory(Path.GetDirectoryName(_exchangeRatesPermaPath));
             _exchangeRatePerma = new SyncPermaObject<string>(Encoding.ASCII.GetString, Encoding.ASCII.GetBytes, _exchangeRatesPermaPath, false, FileAccess.ReadWrite, FileShare.ReadWrite, valueIfCreated: "");
+            _udic = new Dictionary<string, Tuple<IUnit<Money>, string>>(4)
+            {
+                ["D"] = Tuple.Create<IUnit<Money>, string>(DollarUS, "$"),
+                ["S"] = Tuple.Create<IUnit<Money>, string>(NewShekel, "₪"),
+                ["E"] = Tuple.Create<IUnit<Money>, string>(Euro, "€"),
+                ["Y"] = Tuple.Create<IUnit<Money>, string>(Yen, "¥")
+            };
 
             DefaultParsers = new Lazy<Funnel<string, Money>>(() => new Funnel<string, Money>(
                 new Parser<Money>($@"^({CommonRegex.RegexDouble}) ?(\$|dollars?)$", m => new Money(double.Parse(m.Groups[1].Value), DollarUS)),
@@ -96,8 +103,9 @@ namespace MeasureStone
         {
             return updateRates(TimeSpan.FromHours(12), out error);
         }
-        public static bool updateRates(TimeSpan updateTimeTolerance, out Exception error)
+        public static bool updateRates(TimeSpan? updateTimeTolerance, out Exception error)
         {
+            updateTimeTolerance = updateTimeTolerance ?? new TimeSpan(0);
             error = null;
             if (_exchangeRatePerma.timeSinceUpdate() < updateTimeTolerance && _initialized)
                 return false;
@@ -160,15 +168,12 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        private static readonly IDictionary<string, Tuple<IUnit<Money>, string>> _udic;
+        public override IDictionary<string, Tuple<IUnit<Money>, string>> unitDictionary => _udic;
         //accepted formats (D|S|E|Y)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IScaleUnit<Money>, string>> unitDictionary = new Dictionary<string, Tuple<IScaleUnit<Money>, string>>(11);
-            unitDictionary["D"] = Tuple.Create<IScaleUnit<Money>, string>(DollarUS, "$");
-            unitDictionary["S"] = Tuple.Create<IScaleUnit<Money>, string>(NewShekel, "₪");
-            unitDictionary["E"] = Tuple.Create<IScaleUnit<Money>, string>(Euro, "€");
-            unitDictionary["Y"] = Tuple.Create<IScaleUnit<Money>, string>(Yen, "¥");
-            return this.StringFromUnitDictionary(format, "E", formatProvider, unitDictionary, true);
+            return this.StringFromUnitDictionary(format, "E", formatProvider, scaleDictionary, true);
         }
         public override int GetHashCode()
         {

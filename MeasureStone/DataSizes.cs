@@ -9,7 +9,7 @@ using WhetStone.WordPlay.Parsing;
 namespace MeasureStone
 {
     //arbitrary is megabyte
-    public class DataSize : IUnit<DataSize>, ScaleMeasurement, DeltaMeasurement, IComparable<DataSize>
+    public class DataSize : IUnit<DataSize>, ScaleMeasurement<DataSize>, DeltaMeasurement<DataSize>, IComparable<DataSize>
     {
         public DataSize(BigRational val, IUnit<DataSize> unit) : this(unit.ToArbitrary(val)) { }
         public DataSize(BigRational arbitrary)
@@ -17,14 +17,14 @@ namespace MeasureStone
             this.Arbitrary = arbitrary;
         }
         public BigRational Arbitrary { get; }
-        BigRational ScaleMeasurement.Arbitrary
+        BigRational ScaleMeasurement<DataSize>.Arbitrary
         {
             get
             {
                 return this.Arbitrary;
             }
         }
-        BigRational DeltaMeasurement.Arbitrary
+        BigRational DeltaMeasurement<DataSize>.Arbitrary
         {
             get
             {
@@ -95,6 +95,19 @@ namespace MeasureStone
             Exabit = Exabyte/8;
             Zettabit = Zettabyte/8;
             Yottabit = Yottabyte/8;
+            _udic = new Dictionary<string, Tuple<IUnit<DataSize>, string>>(11)
+            {
+                ["b"] = Tuple.Create<IUnit<DataSize>, string>(Bit, "b"),
+                ["B"] = Tuple.Create<IUnit<DataSize>, string>(Byte, "B"),
+                ["K"] = Tuple.Create<IUnit<DataSize>, string>(Kibibyte, "KB"),
+                ["M"] = Tuple.Create<IUnit<DataSize>, string>(Mebibyte, "MB"),
+                ["G"] = Tuple.Create<IUnit<DataSize>, string>(Gibibyte, "GB"),
+                ["T"] = Tuple.Create<IUnit<DataSize>, string>(Tebibyte, "TB"),
+                ["P"] = Tuple.Create<IUnit<DataSize>, string>(Pebibyte, "PB"),
+                ["E"] = Tuple.Create<IUnit<DataSize>, string>(Exbibyte, "EB"),
+                ["Z"] = Tuple.Create<IUnit<DataSize>, string>(Zebibyte, "ZB"),
+                ["Y"] = Tuple.Create<IUnit<DataSize>, string>(Yobibyte, "YB")
+            };
 
             DefaultParsers = new Lazy<Funnel<string, DataSize>>(() => new Funnel<string, DataSize>(
                 new Parser<DataSize>($@"^({CommonRegex.RegexDouble}) ?(b|bits?)$", m => new DataSize(double.Parse(m.Groups[1].Value), Bit)),
@@ -170,21 +183,13 @@ namespace MeasureStone
         {
             return this.ToString("");
         }
+        //todo add more/fix
+        private static readonly IDictionary<string, Tuple<IUnit<DataSize>, string>> _udic;
+        public override IDictionary<string, Tuple<IUnit<DataSize>, string>> unitDictionary => _udic;
         //accepted formats (b|B|K|M|G|T|P|E|Z|Y)_{double format}_{symbol}
         public string ToString(string format, IFormatProvider formatProvider)
         {
-            IDictionary<string, Tuple<IScaleUnit<DataSize>, string>> unitDictionary = new Dictionary<string, Tuple<IScaleUnit<DataSize>, string>>(11);
-            unitDictionary["b"] = Tuple.Create<IScaleUnit<DataSize>, string>(Bit, "b");
-            unitDictionary["B"] = Tuple.Create<IScaleUnit<DataSize>, string>(Byte, "B");
-            unitDictionary["K"] = Tuple.Create<IScaleUnit<DataSize>, string>(Kibibyte, "KB");
-            unitDictionary["M"] = Tuple.Create<IScaleUnit<DataSize>, string>(Mebibyte, "MB");
-            unitDictionary["G"] = Tuple.Create<IScaleUnit<DataSize>, string>(Gibibyte, "GB");
-            unitDictionary["T"] = Tuple.Create<IScaleUnit<DataSize>, string>(Tebibyte, "TB");
-            unitDictionary["P"] = Tuple.Create<IScaleUnit<DataSize>, string>(Pebibyte, "PB");
-            unitDictionary["E"] = Tuple.Create<IScaleUnit<DataSize>, string>(Exbibyte, "EB");
-            unitDictionary["Z"] = Tuple.Create<IScaleUnit<DataSize>, string>(Zebibyte, "ZB");
-            unitDictionary["Y"] = Tuple.Create<IScaleUnit<DataSize>, string>(Yobibyte, "YB");
-            return this.StringFromUnitDictionary(format, "M", formatProvider, unitDictionary);
+            return this.StringFromUnitDictionary(format, "M", formatProvider, scaleDictionary);
         }
         public override int GetHashCode()
         {
